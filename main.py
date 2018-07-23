@@ -32,14 +32,15 @@ null_brew = beer_recipe['BrewMethod'].isnull()
 print('BrewMethod is null on {} rows out of {}, so {} % of the time'.format(null_brew.sum(), len(beer_recipe), round((null_brew.sum()/len(beer_recipe))*100,2)))
 
 
-#
-style_cnt = beer_recipe.loc[:,['Style','PrimingMethod']]
-style_cnt['NullPriming'] = style_cnt['PrimingMethod'].isnull()
+# 그룹화
+style_cnt = beer_recipe.loc[:,['StyleID']]
+print(style_cnt.head())
 style_cnt['Count'] = 1
-style_cnt_grp = style_cnt.loc[:,['Style','Count','NullPriming']].groupby('Style').sum()
-
-style_cnt_grp = style_cnt_grp.sort_values('NullPriming', ascending=False)
+style_cnt_grp = style_cnt.loc[:,['StyleID','Count']].groupby('StyleID').sum()
+print(style_cnt_grp)
+style_cnt_grp = style_cnt_grp.sort_values('Count', ascending=False)
 style_cnt_grp.reset_index(inplace=True)
+print(style_cnt_grp)
 
 
 # 그래프 그리는 함수 정의 -> PrimingMethod Missing Values 찾는거라 여기서 쓰고 끝임 -> 쓸모 없음
@@ -77,6 +78,7 @@ print( list(beer_recipe.select_dtypes(include=object).columns))
 
 
 # SugarScale에 뭐가 몇 개 들어있는지 Count
+# 지금 뒤에 4가지 종류 어찌해야할지 모르겠다!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ax = sns.countplot(x='SugarScale', data=beer_recipe)
 ax.set(title='Frequency table of possible values in SugarScale')
 sns.despine(left=True, bottom=True)
@@ -153,29 +155,30 @@ ax.set(title='Boxplots of high scale features in Beer Recipe dataset')
 sns.despine(left=True, bottom=True)
 
 
-
-# 몇 가지 종류가 있냐
+# 몇 가지 종류의 맥주가 있냐 (StyleId로 판단)
 print('There are {} different styles of beer'.format(beer_recipe.StyleID.nunique()))
 
 
 # 원 그래프 그리기
-# Get top10 styles
-top10_style = list(style_cnt_grp['Style'][:10].values)
+top10_style = list(style_cnt_grp['StyleID'][:10].values)
+print(top10_style)
 
-# Group by current count information computed earlier and group every style not in top20 together
-style_cnt_other = style_cnt_grp.loc[:, ['Style','Count']]
-style_cnt_other.Style = style_cnt_grp.Style.apply(lambda x: x if x in top10_style else 'Other')
-style_cnt_other = style_cnt_other.groupby('Style').sum()
+style_cnt_other = style_cnt_grp.loc[:, ['StyleID','Count']]
+style_cnt_other.StyleID = style_cnt_grp.StyleID.apply(lambda x: x if x in top10_style else 'Other')
+style_cnt_other = style_cnt_other.groupby('StyleID').sum()
+print(style_cnt_other)
 
-# Get ratio of each style
 style_cnt_other['Ratio'] = style_cnt_other.Count.apply(lambda x: x/float(len(beer_recipe)))
 style_cnt_other = style_cnt_other.sort_values('Count', ascending=False)
 
 f, ax = plt.subplots(figsize=(8, 8))
-explode = (0.05, 0.05, 0.05, 0, 0, 0, 0, 0, 0, 0, 0)
-plt.pie(x=style_cnt_other['Ratio'], labels=list(style_cnt_other.index), startangle = 180, autopct='%1.1f%%', pctdistance= .9, explode=explode)
+plt.pie(x=style_cnt_other['Ratio'], labels=list(style_cnt_other.index), startangle = 180, autopct='%1.1f%%', pctdistance= .9)
 plt.title('Ratio of styles across dataset')
 plt.show()
+
+
+
+
 
 
 
@@ -187,6 +190,11 @@ pairplot_df = beer_recipe.loc[:, ['Style','OG_sg','FG_sg','ABV','IBU','Color']]
 sns.set(style="dark")
 sns.pairplot(data=pairplot_df)
 plt.show()
+
+
+
+
+
 
 
 

@@ -9,7 +9,7 @@ sns.set(style="whitegrid")
 
 
 # 데이터 head 보기
-beer_recipe = pd.read_csv('C:/Users/B-dragon90/Desktop/GitHub/Beer-recipes/recipeData2.csv', index_col='BeerID', encoding='latin1')
+beer_recipe = pd.read_csv('C:/Users/paramount/Desktop/GitHub/Beer-recipes/recipeData2.csv', index_col='BeerID', encoding='latin1')
 beer_recipe.head()
 
 
@@ -177,88 +177,84 @@ plt.title('Ratio of styles across dataset')
 plt.show()
 
 
-
-
-
-
-
-
-# 상관관계 5x5 그림. 우리가 관심있는 것만 선택해서
-pairplot_df = beer_recipe.loc[:, ['Style','OG_sg','FG_sg','ABV','IBU','Color']]
-
-# create the pairplot
+# 상관관계 그림. 우리가 관심있는 것만 선택해서
+# NULL 값 제거 해줘야 한다. (아직 못함)
+pairplot_df = beer_recipe.loc[:, ['StyleID', 'OG_sg','FG_sg','ABV','IBU','Color', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate']]
 sns.set(style="dark")
 sns.pairplot(data=pairplot_df)
 plt.show()
 
 
-
-
-
-
-
-
 # Outlier 찾는 이상한 팽이 모양 그래프 그리기
 style_cnt_grp = style_cnt_grp.sort_values('Count', ascending=False)
-top5_style = list(style_cnt_grp['Style'][:5].values)
-
-top5_style_df = pairplot_df[pairplot_df['Style'].isin(top5_style)]
-
+top5_style = list(style_cnt_grp['StyleID'][:5].values)
+top5_style_df = pairplot_df[pairplot_df['StyleID'].isin(top5_style)]
 f, ax = plt.subplots(figsize=(12, 8))
-sns.violinplot(x='Style', y='OG_sg',data=top5_style_df)
+sns.violinplot(x='StyleID', y='OG_sg',data=top5_style_df)
 plt.show()
 
 
-# 실패한 선형 관계 그래프 (그래프가 두 개 나옴)
-# Get Top5 styles
-top5_style = list(style_cnt_grp['Style'][:5].values)
-beer_recipe['Top5_Style'] = beer_recipe.Style.apply(lambda x: x if x in top5_style else 'Other')
-
-# Create Reg plot
-sns.lmplot(x='ABV', y='OG', hue='Top5_Style', col='Top5_Style', col_wrap=3, data=beer_recipe, n_boot=100)
-
-
-# 정상적인 선형 그래프
-# Create Reg plot
+# 선형 관계 그래프
+top5_style = list(style_cnt_grp['StyleID'][:5].values)
+beer_recipe['Top5_Style'] = beer_recipe.StyleID.apply(lambda x: x if x in top5_style else 'Other')
 sns.lmplot(x='ABV', y='OG_sg', hue='Top5_Style', col='Top5_Style', col_wrap=3, data=beer_recipe, n_boot=100)
 
 
-###############################################################
-# imports
+
+
+
+
+
+
+
+
+
+# 사용할 Feature 설정
 from sklearn.preprocessing import LabelEncoder, Imputer
 from sklearn.model_selection import train_test_split
 
-# 사용할 Feature 설정
 features_list= ['StyleID', #target
                 'OG_sg','FG_sg','ABV','IBU','Color', #standardized fields
                 'SugarScale', 'BrewMethod', #categorical features
-                'Size(L)', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency'
-                ]
-# MashThickness, PitchRate, PrimaryTemp
-
-
+                'Size(L)', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate',]
 clf_data = beer_recipe.loc[:, features_list]
 
-# Label encoding
+# 결측치 제거 두 가지 방법
+# 1. 하나라도 Null이 있으면 제거
+# 2. 평균으로 채워넣기
+# print(clf_data.dropna())
+clf_data = clf_data.dropna()
+# print(clf_data.fillna(clf_data.mean()))
+# clf_data = clf_data.fillna(clf_data.mean())
+
+# str 형식으로 나오는 Feature (SugarScale, BrewMethod) NULL 값 채우고 인코딩
+# clf_data2 = clf_data[:, 'SugarScale', 'BrewMethod']
+# print(clf_data2)
+# cat_feats_to_use = clf_data2.dropna()
+
 cat_feats_to_use = list(clf_data.select_dtypes(include=object).columns)
 for feat in cat_feats_to_use:
     encoder = LabelEncoder()
     clf_data[feat] = encoder.fit_transform(clf_data[feat])
 
-# Fill null values
+# print(clf_data[feat])
+
+
+# float 형식 Feature의 NULL 값 채우기
 num_feats_to_use = list(clf_data.select_dtypes(exclude=object).columns)
 for feat in num_feats_to_use:
-    imputer = Imputer(strategy='most_frequent') #median
+    imputer = Imputer(strategy='median') #median, mean, most_frequent
     clf_data[feat] = imputer.fit_transform(clf_data[feat].values.reshape(-1,1))
 
-# Seperate Targets from Features
+print(cat_feats_to_use)
+print(num_feats_list)
+
+# StyleID와 나머지 분류
 X = clf_data.iloc[:, 1:]
-y = clf_data.iloc[:, 0] #the target were the first column I included
+y = clf_data.iloc[:, 0]     # StyleID
 
-# Train test split
+# Train/Test 나누기. TestSize는 20%
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, stratify=y, random_state=35)
-
-
 
 # 무결성 확인. null값 남아있는지 확인.
 X.info()

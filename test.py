@@ -1,3 +1,5 @@
+# https://www.kaggle.com/jtrofe/beer-recipes/
+
 import numpy as np
 import pandas as pd
 import missingno as msno
@@ -6,7 +8,7 @@ import seaborn as sns
 sns.set(style="whitegrid")
 
 
-beer_recipe = pd.read_csv('C:/Users/paramount/Desktop/GitHub/Beer-recipes/recipeData.csv', index_col='BeerID', encoding='latin1')
+beer_recipe = pd.read_csv('C:/Users/B-dragon90/Desktop/GitHub/Beer-recipes/recipeData.csv', index_col='BeerID', encoding='latin1')
 
 null_priming = beer_recipe['PrimingMethod'].isnull()
 

@@ -125,30 +125,39 @@ beer_recipe.loc[:, num_feats_list].describe().T
 
 
 # 지표값 범위로 분류하기
-vlow_scale_feats = ['OG_sg', 'FG_sg', 'BoilGravity_sg', 'PitchRate']
+vlow_scale_feats = ['OG_sg', 'FG_sg', 'BoilGravity', 'BoilGravity_sg', 'PitchRate']
 low_scale_feats = ['ABV', 'MashThickness']
 mid_scale_feats = ['Color', 'BoilTime', 'Efficiency', 'PrimaryTemp']
 high_scale_feats = ['IBU', 'Size(L)',  'BoilSize']
 
 # vlow_scale_feats
+beer_recipe.loc[beer_recipe.OG_sg >= 15, 'OG_sg'] = None
+beer_recipe.loc[beer_recipe.BoilGravity >= 40, 'BoilGravity'] = None
+beer_recipe.loc[beer_recipe.BoilGravity_sg >= 30, 'BoilGravity_sg'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, vlow_scale_feats], orient='h')
 ax.set(title='Boxplots of very low scale features in Beer Recipe dataset')
 sns.despine(left=True, bottom=True)
 
 # low_scale_feats
+beer_recipe.loc[beer_recipe.ABV >= 80, 'ABV'] = None
+beer_recipe.loc[beer_recipe.MashThickness >= 80, 'MashThickness'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, low_scale_feats], orient='h')
 ax.set(title='Boxplots of low scale features in Beer Recipe dataset')
 sns.despine(left=True, bottom=True)
 
 #mid_scale_feats
+beer_recipe.loc[beer_recipe.Color >= 150, 'Color'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, mid_scale_feats], orient='h')
 ax.set(title='Boxplots of medium scale features in Beer Recipe dataset')
 sns.despine(left=True, bottom=True)
 
 #high_scale_feats
+# Size(L) 바꾸자!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+# beer_recipe.loc[beer_recipe.Size >= 5500, 'Size'] = None
+beer_recipe.loc[beer_recipe.BoilSize >= 6000, 'BoilSize'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, high_scale_feats], orient='h')
 ax.set(title='Boxplots of high scale features in Beer Recipe dataset')
@@ -208,8 +217,20 @@ from sklearn.model_selection import train_test_split
 features_list= ['StyleID', #target
                 'OG_sg','FG_sg','ABV','IBU','Color', #standardized fields
                 'SugarScale', 'BrewMethod', #categorical features
-                'Size(L)', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate',]
+                'Size(L)', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate', 'PrimaryTemp']
+
+# 불필요한 Column 삭제
+# del beer_recipe['Name']
+# del beer_recipe['URL']
+# del beer_recipe['Style']
+# del beer_recipe['OG']
+# del beer_recipe['FG']
+# del beer_recipe['PrimaryTemp']
+# del beer_recipe['PrimingMethod']
+# del beer_recipe['PrimingAmount']
+# del beer_recipe['UserId']
 clf_data = beer_recipe.loc[:, features_list]
+print(clf_data.head())
 
 # 결측치 제거 두 가지 방법
 # 1. 하나라도 Null이 있으면 그 행 제거.     2. 평균으로 채워넣기
@@ -236,22 +257,24 @@ for feat in num_feats_to_use:
 # 나눴던 두 테이블 Merge하기
 merge_result = pd.merge(clf_data3, clf_data2, on = 'BeerID', how = 'left')
 
+# 이유는 모르겠지만 아직도 NULL 값이 있음
+# print(merge_result)             # 73861개
+# print(merge_result.dropna())    # 73784개
+merge_result = merge_result.dropna()
+print(merge_result)
+
 # StyleID와 나머지로 나누기
 X = merge_result.iloc[:, 1:]     # 나머지
 Y = merge_result.iloc[:, 0]     # StyleID
 
 # Train/Test 나누기. TestSize는 20%
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2, random_state=35)    #stratify=y,
-
-
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2, stratify=Y, random_state=35)
 
 # 무결성 확인. null값 남아있는지 확인.
 X.info()
 
-np.any(np.isnan(X))
-np.all(np.isfinite(X))
-
-
+sanity_df = pd.DataFrame(X_train, columns = X.columns)
+sanity_df.describe().T
 
 # 스케일링 (Scaling)
 from sklearn.preprocessing import StandardScaler
@@ -265,37 +288,33 @@ sanity_df = pd.DataFrame(X_train, columns = X.columns)
 sanity_df.describe().T
 
 
+# 알고리즘 import
+from sklearn.metrics import accuracy_score
 
-# # 알고리즘 import
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.linear_model import LogisticRegression
 # from sklearn.svm import SVC
-#
 # clf1 = SVC()
-# clf2 = RandomForestClassifier()
-# clf3 = LogisticRegression()
-# clf1.fit(X_train, y_train)
-# clf2.fit(X_train, y_train)
-# clf3.fit(X_train, y_train)
-#
-# from sklearn.metrics import accuracy_score
-#
-# y_pred1 = clf1.predict(X_test)
-# score1 = accuracy_score(y_test, y_pred1)
+# clf1.fit(X_train, Y_train)
+# Y_pred1 = clf1.predict(X_test)
+# score1 = accuracy_score(Y_test, Y_pred1)
 # print('Accuracy: {}'.format(score1))
-#
-# y_pred2 = clf2.predict(X_test)
-# score2 = accuracy_score(y_test, y_pred2)
-# print('Accuracy: {}'.format(score2))
-#
-# y_pred3 = clf3.predict(X_test)
-# score3 = accuracy_score(y_test, y_pred3)
+
+from sklearn.ensemble import RandomForestClassifier
+clf2 = RandomForestClassifier()
+clf2.fit(X_train, Y_train)
+Y_pred2 = clf2.predict(X_test)
+score2 = accuracy_score(Y_test, Y_pred2)
+print('Accuracy: {}'.format(score2))
+
+# from sklearn.linear_model import LogisticRegression
+# clf3 = LogisticRegression()
+# clf3.fit(X_train, Y_train)
+# Y_pred3 = clf3.predict(X_test)
+# score3 = accuracy_score(Y_test, Y_pred3)
 # print('Accuracy: {}'.format(score3))
 
 
-
-# 어떤 Feature가 영향력 있니????
-feats_imp = pd.DataFrame(clf.feature_importances_, index=X.columns, columns=['FeatureImportance'])
+# 어떤 Feature가 영향력 있는지
+feats_imp = pd.DataFrame(clf2.feature_importances_, index=X.columns, columns=['FeatureImportance'])
 feats_imp = feats_imp.sort_values('FeatureImportance', ascending=False)
 
 feats_imp.plot(kind='barh', figsize=(12,6), legend=False)

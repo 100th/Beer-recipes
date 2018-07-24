@@ -190,7 +190,7 @@ plt.show()
 
 
 # 상관관계 그림. 우리가 관심있는 것만 선택해서
-pairplot_df = beer_recipe.loc[:, ['StyleID', 'OG_sg','FG_sg','ABV','IBU','Color', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate']]
+pairplot_df = beer_recipe.loc[:, ['StyleID', 'OG_sg','FG_sg','ABV','IBU','Color', 'BoilGravity_sg', 'PitchRate']]
 pairplot_df2 = pairplot_df.dropna()     # dropna 하면 73000개 -> 34000개
 sns.set(style="dark")
 sns.pairplot(data=pairplot_df2)
@@ -311,4 +311,3 @@ feats_imp.plot(kind='barh', figsize=(12,6), legend=False)
 plt.title('Feature Importance from RandomForest Classifier')
 sns.despine(left=True, bottom=True)
 plt.gca().invert_yaxis()
-w

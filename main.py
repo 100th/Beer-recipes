@@ -10,6 +10,7 @@ sns.set(style="whitegrid")
 
 # 데이터 head 보기
 beer_recipe = pd.read_csv('C:/Users/B-dragon90/Desktop/GitHub/Beer-recipes/recipeData2.csv', index_col='BeerID', encoding='latin1')
+beer_recipe.columns.values[4] = "Size"
 beer_recipe.head()
 
 
@@ -78,7 +79,10 @@ print( list(beer_recipe.select_dtypes(include=object).columns))
 
 
 # SugarScale에 뭐가 몇 개 들어있는지 Count
-# 지금 뒤에 4가지 종류 어찌해야할지 모르겠다!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+beer_recipe.loc[beer_recipe.SugarScale == 'All Grain', 'SugarScale'] = None
+beer_recipe.loc[beer_recipe.SugarScale == 'BIAB', 'SugarScale'] = None
+beer_recipe.loc[beer_recipe.SugarScale == 'Partial Mash', 'SugarScale'] = None
+beer_recipe.loc[beer_recipe.SugarScale == 'extract', 'SugarScale'] = None
 ax = sns.countplot(x='SugarScale', data=beer_recipe)
 ax.set(title='Frequency table of possible values in SugarScale')
 sns.despine(left=True, bottom=True)
@@ -105,7 +109,6 @@ print( list( beer_recipe.select_dtypes(exclude=object)))
 
 
 # 공식 구하는 함수
-####################################################### 공식 다시 생각해보자
 def get_sg_from_plato(plato):
     sg = 1 + (plato / (258.6 - ( (plato/258.2) *227.1) ) )
     # plato = ((-1) * 616.868) + (1111.14 * sg) - (630.272 * pow(sg, 2)) + (135.997 * pow(sg, 3))
@@ -115,49 +118,54 @@ def get_sg_from_plato(plato):
 # 공식을 이용하여 OG_sg, FG_sg, BoilGravity_sg를 구한다.
 beer_recipe['OG_sg'] = beer_recipe.apply(lambda row: get_sg_from_plato(row['OG']) if row['SugarScale'] == 'Plato' else row['OG'], axis=1)
 beer_recipe['FG_sg'] = beer_recipe.apply(lambda row: get_sg_from_plato(row['FG']) if row['SugarScale'] == 'Plato' else row['FG'], axis=1)
+beer_recipe.loc[beer_recipe.BoilGravity >= 30, 'BoilGravity'] = None
 beer_recipe['BoilGravity_sg'] = beer_recipe.apply(lambda row: get_sg_from_plato(row['BoilGravity']) if row['SugarScale'] == 'Plato' else row['BoilGravity'], axis=1)
 
 
-# 궁금한게 PitchRate가 0일 수 있는지???????????????????????????????????????????????????????
 # 데이터의 count, mean, std, min, 25%, 50%, 75%, max 구하기
-num_feats_list = ['Size(L)', 'OG', 'OG_sg', 'FG', 'FG_sg', 'ABV', 'IBU', 'Color', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'MashThickness', 'PitchRate', 'PrimaryTemp']
+num_feats_list = ['Size', 'OG', 'OG_sg', 'FG', 'FG_sg', 'ABV', 'IBU', 'Color', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'MashThickness', 'PitchRate', 'PrimaryTemp']
 beer_recipe.loc[:, num_feats_list].describe().T
 
 
 # 지표값 범위로 분류하기
-vlow_scale_feats = ['OG_sg', 'FG_sg', 'BoilGravity', 'BoilGravity_sg', 'PitchRate']
+vlow_scale_feats = ['OG_sg', 'FG_sg', 'BoilGravity_sg', 'PitchRate']
 low_scale_feats = ['ABV', 'MashThickness']
 mid_scale_feats = ['Color', 'BoilTime', 'Efficiency', 'PrimaryTemp']
-high_scale_feats = ['IBU', 'Size(L)',  'BoilSize']
+high_scale_feats = ['IBU', 'Size',  'BoilSize']
 
 # vlow_scale_feats
-beer_recipe.loc[beer_recipe.OG_sg >= 15, 'OG_sg'] = None
-beer_recipe.loc[beer_recipe.BoilGravity >= 40, 'BoilGravity'] = None
-beer_recipe.loc[beer_recipe.BoilGravity_sg >= 30, 'BoilGravity_sg'] = None
+beer_recipe.loc[beer_recipe.OG_sg >= 1.1, 'OG_sg'] = None
+beer_recipe.loc[beer_recipe.FG_sg >= 1.05, 'FG_sg'] = None
+beer_recipe.loc[beer_recipe.BoilGravity_sg >= 1.1, 'BoilGravity_sg'] = None
+beer_recipe.loc[beer_recipe.PitchRate >= 1.0, 'PitchRate'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, vlow_scale_feats], orient='h')
 ax.set(title='Boxplots of very low scale features in Beer Recipe dataset')
 sns.despine(left=True, bottom=True)
 
 # low_scale_feats
-beer_recipe.loc[beer_recipe.ABV >= 80, 'ABV'] = None
-beer_recipe.loc[beer_recipe.MashThickness >= 80, 'MashThickness'] = None
+beer_recipe.loc[beer_recipe.ABV >= 10, 'ABV'] = None
+beer_recipe.loc[beer_recipe.MashThickness >= 30, 'MashThickness'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, low_scale_feats], orient='h')
 ax.set(title='Boxplots of low scale features in Beer Recipe dataset')
 sns.despine(left=True, bottom=True)
 
 #mid_scale_feats
-beer_recipe.loc[beer_recipe.Color >= 150, 'Color'] = None
+beer_recipe.loc[beer_recipe.Color >= 50, 'Color'] = None
+beer_recipe.loc[beer_recipe.BoilTime >= 120, 'BoilTime'] = None
+beer_recipe.loc[beer_recipe.BoilTime == 0, 'BoilTime'] = None
+beer_recipe.loc[beer_recipe.Efficiency == 0, 'Efficiency'] = None
+beer_recipe.loc[beer_recipe.PrimaryTemp >= 100, 'PrimaryTemp'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, mid_scale_feats], orient='h')
 ax.set(title='Boxplots of medium scale features in Beer Recipe dataset')
 sns.despine(left=True, bottom=True)
 
 #high_scale_feats
-# Size(L) 바꾸자!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-# beer_recipe.loc[beer_recipe.Size >= 5500, 'Size'] = None
-beer_recipe.loc[beer_recipe.BoilSize >= 6000, 'BoilSize'] = None
+beer_recipe.loc[beer_recipe.IBU >= 50, 'IBU'] = None
+beer_recipe.loc[beer_recipe.Size >= 100, 'Size'] = None
+beer_recipe.loc[beer_recipe.BoilSize >= 100, 'BoilSize'] = None
 f, ax = plt.subplots(figsize=(12, 8))
 ax = sns.boxplot(data=beer_recipe.loc[:, high_scale_feats], orient='h')
 ax.set(title='Boxplots of high scale features in Beer Recipe dataset')
@@ -170,16 +178,11 @@ print('There are {} different styles of beer'.format(beer_recipe.StyleID.nunique
 
 # 원 그래프 그리기
 top10_style = list(style_cnt_grp['StyleID'][:10].values)
-print(top10_style)
-
 style_cnt_other = style_cnt_grp.loc[:, ['StyleID','Count']]
 style_cnt_other.StyleID = style_cnt_grp.StyleID.apply(lambda x: x if x in top10_style else 'Other')
 style_cnt_other = style_cnt_other.groupby('StyleID').sum()
-print(style_cnt_other)
-
 style_cnt_other['Ratio'] = style_cnt_other.Count.apply(lambda x: x/float(len(beer_recipe)))
 style_cnt_other = style_cnt_other.sort_values('Count', ascending=False)
-
 f, ax = plt.subplots(figsize=(8, 8))
 plt.pie(x=style_cnt_other['Ratio'], labels=list(style_cnt_other.index), startangle = 180, autopct='%1.1f%%', pctdistance= .9)
 plt.title('Ratio of styles across dataset')
@@ -187,7 +190,6 @@ plt.show()
 
 
 # 상관관계 그림. 우리가 관심있는 것만 선택해서
-# NULL 값 제거 해줘야 한다. (아직 못함)
 pairplot_df = beer_recipe.loc[:, ['StyleID', 'OG_sg','FG_sg','ABV','IBU','Color', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate']]
 pairplot_df2 = pairplot_df.dropna()     # dropna 하면 73000개 -> 34000개
 sns.set(style="dark")
@@ -217,26 +219,14 @@ from sklearn.model_selection import train_test_split
 features_list= ['StyleID', #target
                 'OG_sg','FG_sg','ABV','IBU','Color', #standardized fields
                 'SugarScale', 'BrewMethod', #categorical features
-                'Size(L)', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate', 'PrimaryTemp']
-
-# 불필요한 Column 삭제
-# del beer_recipe['Name']
-# del beer_recipe['URL']
-# del beer_recipe['Style']
-# del beer_recipe['OG']
-# del beer_recipe['FG']
-# del beer_recipe['PrimaryTemp']
-# del beer_recipe['PrimingMethod']
-# del beer_recipe['PrimingAmount']
-# del beer_recipe['UserId']
+                'BoilGravity_sg', 'PitchRate']
 clf_data = beer_recipe.loc[:, features_list]
-print(clf_data.head())
 
 # 결측치 제거 두 가지 방법
 # 1. 하나라도 Null이 있으면 그 행 제거.     2. 평균으로 채워넣기
 include_object_list = ['SugarScale', 'BrewMethod']
 clf_data2 = beer_recipe.loc[:, include_object_list]
-exclude_object_list = ['StyleID', 'OG_sg', 'FG_sg', 'ABV', 'IBU', 'Color', 'Size(L)', 'BoilSize', 'BoilTime', 'BoilGravity_sg', 'Efficiency', 'PitchRate']
+exclude_object_list = ['StyleID', 'OG_sg', 'FG_sg', 'ABV', 'IBU', 'Color', 'BoilGravity_sg', 'PitchRate']
 clf_data3 = beer_recipe.loc[:, exclude_object_list]
 
 clf_data2 = clf_data2.dropna()     # clf_data2는 문자라서 dropna() 썼다.
@@ -268,7 +258,7 @@ X = merge_result.iloc[:, 1:]     # 나머지
 Y = merge_result.iloc[:, 0]     # StyleID
 
 # Train/Test 나누기. TestSize는 20%
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2, stratify=Y, random_state=35)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.3, stratify=Y, random_state=35)
 
 # 무결성 확인. null값 남아있는지 확인.
 X.info()
@@ -321,3 +311,4 @@ feats_imp.plot(kind='barh', figsize=(12,6), legend=False)
 plt.title('Feature Importance from RandomForest Classifier')
 sns.despine(left=True, bottom=True)
 plt.gca().invert_yaxis()
+w

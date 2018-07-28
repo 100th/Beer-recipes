@@ -21,6 +21,12 @@ folder = 'C:/Users/paramount/Desktop/Github/Beer-recipes/result'
 beer_recipe = pd.read_csv('C:/Users/Paramount/Desktop/GitHub/Beer-recipes/recipeData_cleansing.csv', index_col='BeerID', encoding='latin1')
 beer_recipe.columns.values[2] = "Size"
 
+beer_recipe_describe = beer_recipe.describe().T
+beer_recipe_describe_path = os.path.join(folder, '0. beer_recipe_describe.csv')
+beer_recipe_describe.to_csv(beer_recipe_describe_path)
+
+
+
 
 # Null 값이 얼마나 많은지
 %matplotlib inline

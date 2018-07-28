@@ -26,8 +26,6 @@ beer_recipe_describe_path = os.path.join(folder, '0. beer_recipe_describe.csv')
 beer_recipe_describe.to_csv(beer_recipe_describe_path)
 
 
-
-
 # Null 값이 얼마나 많은지
 %matplotlib inline
 msno.matrix(beer_recipe.sample(1000))
@@ -205,12 +203,12 @@ scaling.to_csv(scaling_path)
 
 
 # 1.서포트 벡터 머신
-# from sklearn.svm import SVC
-# clf1 = SVC()
-# clf1.fit(X_train, Y_train)
-# Y_pred1 = clf1.predict(X_test)
-# score1 = accuracy_score(Y_test, Y_pred1)
-# print('Accuracy: {}'.format(score1))
+from sklearn.svm import SVC
+clf1 = SVC()
+clf1.fit(X_train, Y_train)
+Y_pred1 = clf1.predict(X_test)
+score1 = accuracy_score(Y_test, Y_pred1)
+print('Accuracy: {}'.format(score1))
 
 
 # 2.랜덤 포레스트
@@ -226,12 +224,12 @@ print(cl_report)
 
 
 # 3.로지스틱 회귀
-# from sklearn.linear_model import LogisticRegression
-# clf3 = LogisticRegression()
-# clf3.fit(X_train, Y_train)
-# Y_pred3 = clf3.predict(X_test)
-# score3 = accuracy_score(Y_test, Y_pred3)
-# print('Accuracy: {}'.format(score3))
+from sklearn.linear_model import LogisticRegression
+clf3 = LogisticRegression()
+clf3.fit(X_train, Y_train)
+Y_pred3 = clf3.predict(X_test)
+score3 = accuracy_score(Y_test, Y_pred3)
+print('Accuracy: {}'.format(score3))
 
 
 # 어떤 Feature가 영향력 있는지

@@ -1,12 +1,14 @@
 import numpy as np
-import pandas as pd
-
-table = pd.read_csv('C:/Users/B-dragon90/Desktop/GitHub/Beer-recipes/test.csv', index_col='ID', encoding='latin1')
-table.head()
-
-table.loc[table.year >= 2001, 'year'] = None
+from sklearn.model_selection import train_test_split
+X, y = np.arange(10).reshape((5, 2)), range(5)
+X
+list(y)
 
 
-table.head()
+X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.33, stratify = )
 
-table.isnull()
+X_train
+y_train
+X_test
+y_test

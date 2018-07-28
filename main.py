@@ -184,7 +184,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, stratify = Y, test_siz
 # X.info()
 sanity_df = pd.DataFrame(X_train, columns = X.columns)
 remove_outlier = sanity_df.describe().T
-remove_outlier_path = os.path.join(folder, '1. remove_outlier')
+remove_outlier_path = os.path.join(folder, '1. remove_outlier.csv')
 remove_outlier.to_csv(remove_outlier_path)
 
 
